@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Do You Evaluate the State? — Interactive Session</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Serif+JP:wght@400;600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  :root {
+    --navy: #2c5f8d;
+    --navy-dark: #1e3d5f;
+    --red: #a8323d;
+    --gold: #c8a64b;
+    --orange: #c26a2d;
+    --body: #1a1a2e;
+    --sub: #5a5a6e;
+    --muted: #8a8a9e;
+    --border: #d0d0d4;
+    --bg: #fdfcf9;
+    --soft: #f5f0e6;
+    --you: #c26a2d;        /* vivid orange — focal */
+    --aud: #c8a64b;        /* vivid gold — focal */
+    --schAll: #8a8a9e;     /* muted gray — reference */
+    --schA: #9eb0c4;       /* desaturated blue */
+    --schB: #b0a0c0;       /* desaturated purple */
+    --schC: #a0c0b0;       /* desaturated green */
+  }
+  
+  html, body {
+    font-family: 'Inter', 'Noto Sans JP', 'Noto Sans SC', sans-serif;
+    background: #e8e8ea;
+    color: var(--body);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  
+  .app { max-width: 940px; margin: 0 auto; padding: 32px 24px 80px; }
+  
+  header {
+    background: var(--body);
+    color: var(--bg);
+    padding: 28px 36px;
+    border-radius: 6px 6px 0 0;
+    position: relative;
+  }
+  header .kicker {
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--gold); font-weight: 700; margin-bottom: 8px;
+  }
+  header h1 {
+    font-size: 28px; font-weight: 700; letter-spacing: -0.01em;
+    line-height: 1.2; margin-bottom: 8px;
+  }
+  header .sub { font-size: 14px; color: #b8b8c8; max-width: 700px; }
+  header .progress {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 3px; background: rgba(255,255,255,0.1);
+  }
+  header .progress-fill {
+    height: 100%; background: var(--gold);
+    transition: width 0.3s ease;
+  }
+  
+  .card {
+    background: var(--bg);
+    padding: 32px 36px;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+  }
+  
+  /* Intro */
+  .intro h2 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+  .intro p { font-size: 15px; color: var(--sub); margin-bottom: 14px; line-height: 1.6; }
+  .intro ul { margin: 14px 0 14px 22px; font-size: 14px; color: var(--sub); }
+  .intro ul li { margin-bottom: 6px; }
+  
+  .lang-row {
+    display: flex; gap: 10px; align-items: center;
+    margin: 20px 0 24px; padding: 14px 16px;
+    background: var(--soft); border-left: 3px solid var(--gold);
+    border-radius: 2px;
+  }
+  .lang-row .lbl {
+    font-size: 11px; font-weight: 700; color: #7a3d1e;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .lang-btns { display: flex; gap: 8px; }
+  .lang-btn {
+    padding: 7px 14px; font-size: 13px; font-weight: 600;
+    background: white; border: 1.5px solid var(--border);
+    border-radius: 3px; cursor: pointer;
+  }
+  .lang-btn:hover { border-color: var(--navy); color: var(--navy); }
+  .lang-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+  
+  .start-btn {
+    padding: 13px 30px; font-size: 15px; font-weight: 700;
+    background: var(--orange); color: white;
+    border: none; border-radius: 4px; cursor: pointer;
+  }
+  .start-btn:hover { background: #a85a25; }
+  
+  /* Question */
+  .q-progress {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 18px; padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .q-num { font-size: 13px; font-weight: 700; color: var(--body); letter-spacing: 0.05em; }
+  .q-num em { font-style: normal; color: var(--muted); font-weight: 400; }
+  
+  .question-text {
+    font-size: 21px; font-weight: 600; color: var(--body);
+    line-height: 1.45; margin-bottom: 10px; min-height: 76px;
+  }
+  .question-text.ja { font-family: 'Noto Serif JP', serif; }
+  .question-text.zh { font-family: 'Noto Sans SC', sans-serif; }
+  
+  .question-sub {
+    font-size: 13px; color: var(--muted);
+    line-height: 1.5; margin-bottom: 32px; font-style: italic;
+  }
+  .question-sub.ja { font-family: 'Noto Sans JP', sans-serif; font-style: normal; }
+  .question-sub.zh { font-family: 'Noto Sans SC', sans-serif; font-style: normal; }
+  
+  .likert {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 10px; margin-bottom: 26px;
+  }
+  .likert-btn {
+    padding: 16px 10px; font-size: 14px; font-weight: 600;
+    background: white; border: 2px solid var(--border);
+    border-radius: 4px; cursor: pointer;
+    transition: all 0.15s;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    line-height: 1.3;
+  }
+  .likert-btn .num { font-size: 22px; font-weight: 800; color: var(--body); }
+  .likert-btn .lbl {
+    font-size: 11.5px; color: var(--sub); font-weight: 500;
+    text-align: center;
+  }
+  .likert-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+  .likert-btn.selected {
+    border-color: var(--orange); background: rgba(194,106,45,0.08);
+  }
+  .likert-btn.selected .num { color: var(--orange); }
+  
+  .nav-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);
+  }
+  .nav-btn {
+    padding: 9px 18px; font-size: 13px; font-weight: 600;
+    background: transparent; border: 1.5px solid var(--border);
+    color: var(--sub); border-radius: 3px; cursor: pointer;
+  }
+  .nav-btn:hover:not(:disabled) { border-color: var(--body); color: var(--body); }
+  .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  
+  /* Waiting step */
+  .wait-step { text-align: center; padding: 60px 20px; }
+  .wait-step .check {
+    font-size: 64px; line-height: 1;
+    color: var(--gold); margin-bottom: 20px;
+  }
+  .wait-step h2 { font-size: 26px; font-weight: 700; margin-bottom: 12px; }
+  .wait-step p {
+    font-size: 15px; color: var(--sub); line-height: 1.6;
+    max-width: 520px; margin: 0 auto 18px;
+  }
+  .wait-step p.small { font-size: 13px; color: var(--muted); }
+  .wait-step .reveal-btn {
+    margin-top: 14px;
+    padding: 16px 40px; font-size: 16px; font-weight: 700;
+    background: var(--orange); color: white;
+    border: none; border-radius: 4px; cursor: pointer;
+  }
+  .wait-step .reveal-btn:hover { background: #a85a25; }
+  
+  /* Results step */
+  .results-step h2 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .results-step .subline {
+    font-size: 14px; color: var(--sub); margin-bottom: 24px;
+  }
+  
+  .chart-section { margin-bottom: 30px; }
+  .chart-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 14px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .chart-legend {
+    display: flex; gap: 14px; margin-bottom: 20px;
+    font-size: 11.5px; color: var(--sub); flex-wrap: wrap;
+  }
+  .chart-legend .item { display: flex; align-items: center; gap: 5px; }
+  .chart-legend .sw {
+    width: 16px; height: 11px; border-radius: 1px; flex-shrink: 0;
+  }
+  
+  .chart-axis {
+    position: relative; height: 16px;
+    margin-left: 160px; margin-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .chart-axis .tick {
+    position: absolute; bottom: 0; font-size: 10px; color: var(--muted);
+    transform: translateX(-50%);
+  }
+  .chart-axis .tick::before {
+    content: ''; position: absolute;
+    left: 50%; bottom: -4px; width: 1px; height: 5px;
+    background: var(--border);
+  }
+  
+  .factor-bar {
+    display: grid; grid-template-columns: 160px 1fr;
+    align-items: center;
+    position: relative;
+    padding: 5px 0;
+  }
+  .factor-bar .flabel { padding-right: 12px; text-align: right; }
+  .factor-bar .flabel .fen {
+    font-size: 12.5px; font-weight: 700; color: var(--body); line-height: 1.2;
+  }
+  .factor-bar .flabel .fsub {
+    font-size: 10px; color: var(--muted); margin-top: 1px;
+    line-height: 1.3;
+  }
+  
+  .bar-track {
+    position: relative;
+    background: rgba(0,0,0,0.03);
+    border-radius: 2px;
+    padding: 3px 0;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .bar-line {
+    height: 11px; border-radius: 2px;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: 6px;
+    font-size: 10px; font-weight: 700; color: white;
+    font-variant-numeric: tabular-nums;
+    min-width: 44px;
+    transition: width 0.6s ease;
+    white-space: nowrap;
+  }
+  .bar-you   { background: var(--you); height: 13px; font-size: 10.5px; }
+  .bar-aud   { background: var(--aud); color: var(--body); height: 13px; font-size: 10.5px; }
+  .bar-schAll { background: var(--schAll); opacity: 0.85; }
+  .bar-schA  { background: var(--schA); color: #2a3a4a; opacity: 0.9; }
+  .bar-schB  { background: var(--schB); color: #3a2a4a; opacity: 0.9; }
+  .bar-schC  { background: var(--schC); color: #2a4a3a; opacity: 0.9; }
+  
+  .midline-mark {
+    position: absolute; left: 50%; top: 2px; bottom: 2px;
+    width: 1px; background: #a8a8b0;
+    border-left: 1px dashed #a8a8b0;
+    z-index: 0;
+  }
+  
+  .side-divider {
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 16px 0 6px; padding-bottom: 3px;
+    border-bottom: 1px solid;
+  }
+  .side-divider.adv { color: var(--orange); border-color: var(--orange); }
+  .side-divider.rel { color: var(--navy); border-color: var(--navy); }
+  
+  .refresh-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 22px; padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .refresh-btn {
+    padding: 8px 16px; font-size: 12px; font-weight: 600;
+    background: white; border: 1.5px solid var(--border);
+    color: var(--sub); border-radius: 3px; cursor: pointer;
+  }
+  .refresh-btn:hover { border-color: var(--navy); color: var(--navy); }
+  .n-audience { font-size: 12px; color: var(--muted); }
+  .n-audience strong { color: var(--body); }
+  
+  /* Explanation */
+  .explain-section { margin-top: 32px; }
+  .explain-section h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+  
+  .explain-legend {
+    display: flex; gap: 18px; margin-bottom: 16px; flex-wrap: wrap;
+    font-size: 11.5px; color: var(--sub);
+  }
+  .explain-legend .le {
+    display: flex; align-items: center; gap: 7px;
+  }
+  .explain-legend .le-sw {
+    width: 18px; height: 13px; border-radius: 2px;
+    border-left: 3px solid;
+  }
+  .explain-legend .le.adv .le-sw {
+    background: rgba(194,106,45,0.08); border-left-color: var(--orange);
+  }
+  .explain-legend .le.rel .le-sw {
+    background: rgba(44,95,141,0.06); border-left-color: var(--navy);
+  }
+  
+  .explain-grid { display: grid; gap: 12px; }
+  .explain-card {
+    padding: 14px 18px; border-radius: 4px;
+    border-left: 4px solid var(--gold);
+  }
+  .explain-card.adv {
+    border-left-color: var(--orange);
+    background: rgba(194,106,45,0.05);
+  }
+  .explain-card.rel {
+    border-left-color: var(--navy);
+    background: rgba(44,95,141,0.05);
+  }
+  .explain-card .title {
+    font-size: 14.5px; font-weight: 700; margin-bottom: 6px;
+    color: var(--body);
+  }
+  .explain-card .title .jp {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 500; color: var(--sub); margin-left: 8px;
+    font-size: 12.5px;
+  }
+  .explain-card .defn {
+    font-size: 13px; line-height: 1.55; color: var(--sub);
+  }
+  .explain-card .defn.ja {
+    font-family: 'Noto Sans JP', sans-serif;
+    margin-top: 5px; font-size: 12px; color: #7a7a8e;
+  }
+  
+  .note-box {
+    margin-top: 22px; padding: 14px 18px;
+    font-size: 12px; color: var(--sub); line-height: 1.5;
+    background: #f5f5f7; border-radius: 4px;
+  }
+  
+  @media (max-width: 640px) {
+    .app { padding: 16px 12px 60px; }
+    header { padding: 20px 20px; }
+    .card { padding: 22px 18px; }
+    header h1 { font-size: 22px; }
+    .likert { grid-template-columns: repeat(2, 1fr); }
+    .factor-bar { grid-template-columns: 110px 1fr; }
+    .chart-axis { margin-left: 110px; }
+    .factor-bar .flabel .fen { font-size: 11px; }
+    .factor-bar .flabel .fsub { font-size: 9px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="kicker">AUDIENCE INTERACTIVE SESSION</div>
+    <h1>How do you evaluate the state?</h1>
+    <div class="sub">An 18-item version of the Wave 2 survey I gave to 1,000+ Japanese high school students.</div>
+    <div class="progress"><div class="progress-fill" id="progress-bar" style="width: 0%"></div></div>
+  </header>
+  
+  <div class="card" id="card"></div>
+</div>
+
+<script>
+const ITEMS = [
+  {id:'h1',factor:'hist_adv',en:"The state has a long history and is the foundation of our society.",ja:"国家は長い歴史があって、私たちの社会の土台になっている。",zh:"国家拥有悠久的历史,是我们社会的根基。"},
+  {id:'h2',factor:'hist_adv',en:"We carefully protect the country inherited from our ancestors.",ja:"私たちは、先代から受け継いだ国を大切に守っている。",zh:"我们珍视并守护着从先辈继承下来的国家。"},
+  {id:'i1',factor:'inst_adv',en:"The state provides police and military to protect our safety.",ja:"国が警察や軍を作って、私たちの安全を守ってくれる。",zh:"国家建立警察和军队来保护我们的安全。"},
+  {id:'i2',factor:'inst_adv',en:"The state drives the economy, making our lives richer.",ja:"国が経済を動かすから、私たちの生活が豊かになる。",zh:"国家推动经济运转,使我们的生活更加富足。"},
+  {id:'i3',factor:'inst_adv',en:"Because of the state, we can cooperate globally to solve problems.",ja:"国があるから、世界と協力して問題を解決できる。",zh:"因为有国家存在,我们才能够与世界合作,共同解决问题。"},
+  {id:'e1',factor:'emot_adv',en:"When I think about the country, I get a warm feeling.",ja:"国のことを考えると、なんだか温かい気持ちになる。",zh:"想到自己的国家,我心里会涌起一种温暖的感觉。"},
+  {id:'e2',factor:'emot_adv',en:"The country is like my own home/family — I love it and want to cherish it.",ja:"国は自分の家や家族みたいなもので、好きだし大切にしたい。",zh:"国家就像自己的家和家人一样,我喜爱它、珍视它。"},
+  {id:'e3',factor:'emot_adv',en:"As a member of the state, I feel great purpose and pride.",ja:"国家の一員として、大きな目的や誇りを感じる。",zh:"作为国家的一员,我感到重大的使命感与自豪感。"},
+  {id:'d1',factor:'anti_dom',en:"State power ultimately rests on mechanisms of violence.",ja:"国家の力は、最終的に暴力の仕組みに支えられている。",zh:"国家的力量,归根到底是由暴力机制支撑的。"},
+  {id:'d2',factor:'anti_dom',en:"Something feels wrong about taxes being taken by force.",ja:"税金が強制的に取られる仕組みには、どうしても違和感がある。",zh:"税收被强制征收这件事,总让我感到不对劲。"},
+  {id:'d3',factor:'anti_dom',en:"It's unnatural that you need 'state permission' to do certain jobs.",ja:"ある仕事をするのに「国の許可」がいるのは不自然だ。",zh:"做某些工作需要\"国家许可\",这本身就很不自然。"},
+  {id:'n1',factor:'anti_inev',en:"Looking at history, order can be achieved without a state.",ja:"歴史を見ると、国がなくても秩序を得ることができる。",zh:"从历史来看,没有国家也可以获得秩序。"},
+  {id:'n2',factor:'anti_inev',en:"Borders were arbitrarily decided by past people — not absolute.",ja:"国境は昔の人が勝手に決めたものだから、絶対ではない。",zh:"国界是过去的人随意划定的,并非绝对的。"},
+  {id:'n3',factor:'anti_inev',en:"Differences between countries show that states are merely human-made.",ja:"国ごとの違いを見ると、国家とは人が作ったものにすぎないことがわかる。",zh:"看看各国的差异就明白,国家不过是人造之物。"},
+  {id:'n4',factor:'anti_inev',en:"Historically speaking, the state is not an eternal entity.",ja:"国家は歴史的に見て、永遠に続く存在ではない。",zh:"从历史角度看,国家并非永久存续的存在。"},
+  {id:'c1',factor:'anti_cs',en:"The state claims fairness, but in reality it is often unfair.",ja:"国は公平を主張するが、実際には不公平なことが多い。",zh:"国家声称公平,但现实中往往并不公平。"},
+  {id:'c2',factor:'anti_cs',en:"The state claims to protect freedom, but sometimes it feels restrictive.",ja:"国が自由を守ると言うが、逆に窮屈に感じる時がある。",zh:"国家声称守护自由,但有时反而让人感到束缚。"},
+  {id:'c3',factor:'anti_cs',en:"I question why rights should differ by nationality.",ja:"国籍で権利の差が生まれることに疑問がある。",zh:"由国籍决定权利差异,让我感到疑惑。"},
+];
+
+const FACTORS = {
+  hist_adv:  { side: 'adv', en_name: 'Historical advocacy',   jp_name: '歴史的擁護',
+               means: {all: 3.06, A: 3.10, B: 3.13, C: 2.85} },
+  inst_adv:  { side: 'adv', en_name: 'Instrumental advocacy', jp_name: '道具的擁護',
+               means: {all: 2.80, A: 2.82, B: 2.82, C: 2.70} },
+  emot_adv:  { side: 'adv', en_name: 'Emotional advocacy',    jp_name: '感情的擁護',
+               means: {all: 2.48, A: 2.55, B: 2.53, C: 2.21} },
+  anti_cs:   { side: 'rel', en_name: 'Anti-current-state',    jp_name: '現状批判',
+               means: {all: 3.17, A: 3.20, B: 3.21, C: 3.02} },
+  anti_inev: { side: 'rel', en_name: 'Anti-inevitability',    jp_name: '必然性批判',
+               means: {all: 2.69, A: 2.60, B: 2.66, C: 2.98} },
+  anti_dom:  { side: 'rel', en_name: 'Anti-dominance',        jp_name: '支配性批判',
+               means: {all: 2.41, A: 2.56, B: 2.35, C: 2.01} },
+};
+
+const FACTOR_ORDER = ['hist_adv', 'inst_adv', 'emot_adv', 'anti_cs', 'anti_inev', 'anti_dom'];
+
+const EXPLAIN = {
+  hist_adv: {
+    defn_en: "Agreement that the state is legitimate because it has long historical roots and was inherited from previous generations.",
+    defn_ja: "長い歴史を持ち、先代から受け継がれてきた存在であることを理由に国家を正当化する立場。"
+  },
+  inst_adv: {
+    defn_en: "Agreement that the state is legitimate because it performs important functions — providing security, running the economy, enabling international cooperation.",
+    defn_ja: "国家は重要な機能(安全保障・経済運営・国際協力など)を果たすがゆえに正当である、という立場。"
+  },
+  emot_adv: {
+    defn_en: "Agreement that the state evokes warm feelings, pride, or a sense of belonging — like a home or family.",
+    defn_ja: "国家に対して温かい感情、誇り、家や家族のような帰属感を抱く立場。"
+  },
+  anti_cs: {
+    defn_en: "Agreement that the current state often fails to live up to its own claims — fairness in rhetoric but unfairness in practice, freedom claimed but felt as restriction.",
+    defn_ja: "現行の国家が自らの理念(公平・自由など)を実際には果たしていないという批判。"
+  },
+  anti_inev: {
+    defn_en: "Agreement that the state is human-made, historically contingent, and not an eternal or inevitable form of human organization.",
+    defn_ja: "国家は人為的に作られたものであり、歴史的に偶然的で、永遠でも不可避でもないという見方。"
+  },
+  anti_dom: {
+    defn_en: "Agreement that state power ultimately rests on compulsion — taxes taken by force, punishments decided unilaterally, permissions required from the state to act.",
+    defn_ja: "国家権力は最終的に強制(強制的徴税、一方的な刑罰、許可制など)に支えられているという認識、およびそれに対する違和感。"
+  },
+};
+
+let state = {
+  step: 'intro',
+  qi: 0,
+  lang: 'en',
+  answers: {},
+  userScores: null,
+  crowdScores: null,
+  crowdN: 0,
+};
+
+// ============================================================
+// SUPABASE CONFIG — replace these with your project's values
+// ============================================================
+const SUPABASE_URL  = 'https://jrokugckiseigbguxfwj.supabase.co/rest/v1/';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyb2t1Z2NraXNlaWdiZ3V4ZndqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwMTM3MzksImV4cCI6MjA5MjU4OTczOX0.U5Dli53KQ9sdWkpgaYhrfAimZeDZZvEUB1iEB1LzFEs';          // public anon key — safe to embed
+const ADMIN_SECRET  = 'reset'; // arbitrary string; used in ?admin=TOKEN URL
+const TABLE = 'responses';
+
+// If the config is still the default placeholder, skip all network calls.
+// This lets you preview the page locally or on GitHub Pages before finishing Supabase setup.
+const CONFIGURED =
+  !SUPABASE_URL.includes('YOUR_PROJECT_REF') &&
+  !SUPABASE_ANON.includes('YOUR_ANON_KEY');
+
+const API = `${SUPABASE_URL}/rest/v1/${TABLE}`;
+const HEADERS = {
+  'apikey': SUPABASE_ANON,
+  'Authorization': `Bearer ${SUPABASE_ANON}`,
+  'Content-Type': 'application/json',
+  'Prefer': 'return=representation'
+};
+
+async function maybeHandleAdmin() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('admin');
+  if (!token) return;
+  if (!CONFIGURED) {
+    alert('Supabase not configured yet — cannot reset.');
+    window.history.replaceState({}, '', window.location.pathname);
+    return;
+  }
+  if (token !== ADMIN_SECRET) {
+    alert('Admin token mismatch.');
+    window.history.replaceState({}, '', window.location.pathname);
+    return;
+  }
+  const confirmed = confirm(
+    'ADMIN: Reset audience average?\n\n' +
+    'This will permanently delete ALL stored responses. Cannot be undone.\n' +
+    'Click OK to proceed.'
+  );
+  if (confirmed) {
+    try {
+      const r = await fetch(`${API}?id=gte.0`, { method: 'DELETE', headers: HEADERS });
+      if (r.ok) {
+        alert('✓ All responses cleared. The next respondent will start a fresh baseline.');
+      } else {
+        alert('Reset failed: ' + r.status + ' ' + (await r.text()));
+      }
+    } catch (e) {
+      alert('Reset error: ' + e.message);
+    }
+  }
+  window.history.replaceState({}, '', window.location.pathname);
+}
+
+async function loadCrowd() {
+  if (!CONFIGURED) return { scores: null, n: 0 };
+  try {
+    const r = await fetch(`${API}?select=hist_adv,inst_adv,emot_adv,anti_dom,anti_inev,anti_cs`, {
+      headers: HEADERS
+    });
+    if (!r.ok) return { scores: null, n: 0 };
+    const rows = await r.json();
+    const n = rows.length;
+    if (n === 0) return { scores: null, n: 0 };
+    const sums = {};
+    for (const f of FACTOR_ORDER) sums[f] = 0;
+    for (const row of rows) {
+      for (const f of FACTOR_ORDER) sums[f] += row[f] ?? 0;
+    }
+    const scores = {};
+    for (const f of FACTOR_ORDER) scores[f] = sums[f] / n;
+    return { scores, n };
+  } catch (e) {
+    console.warn('loadCrowd error:', e);
+    return { scores: null, n: 0 };
+  }
+}
+
+async function saveCrowdUpdate(userScores) {
+  if (!CONFIGURED) return { scores: null, n: 0 };
+  try {
+    const row = {};
+    for (const f of FACTOR_ORDER) row[f] = +userScores[f].toFixed(4);
+    const r = await fetch(API, {
+      method: 'POST',
+      headers: HEADERS,
+      body: JSON.stringify(row)
+    });
+    if (!r.ok) {
+      console.warn('insert failed:', r.status, await r.text());
+    }
+  } catch (e) {
+    console.warn('saveCrowdUpdate error:', e);
+  }
+  return await loadCrowd();
+}
+
+function computeUserScores() {
+  const scores = {};
+  for (const f of FACTOR_ORDER) {
+    const items = ITEMS.filter(i => i.factor === f);
+    const vals = items.map(i => state.answers[i.id]).filter(v => v != null);
+    scores[f] = vals.length === 0 ? null : vals.reduce((a,b) => a+b, 0) / vals.length;
+  }
+  return scores;
+}
+
+const card = document.getElementById('card');
+
+function renderIntro() {
+  card.innerHTML = `
+    <div class="intro">
+      <h2>About this session</h2>
+      <p>You'll answer 18 opinion statements about the state. No right or wrong answers — answer honestly.</p>
+      <p>At the end you'll see your scores on six dimensions, compared to:</p>
+      <ul>
+        <li>Japanese high school students who took the same survey (n ≈ 765), broken down by school</li>
+        <li>Other audience members who have taken this survey (live running average)</li>
+      </ul>
+      <p>Takes about 2 minutes.</p>
+      
+      <div class="lang-row">
+        <span class="lbl">Question language:</span>
+        <div class="lang-btns">
+          <button class="lang-btn ${state.lang==='en'?'active':''}" data-lang="en">English</button>
+          <button class="lang-btn ${state.lang==='ja'?'active':''}" data-lang="ja">日本語</button>
+          <button class="lang-btn ${state.lang==='zh'?'active':''}" data-lang="zh">中文</button>
+        </div>
+      </div>
+      
+      <button class="start-btn" id="btn-start">Start</button>
+    </div>
+  `;
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => { state.lang = btn.dataset.lang; renderIntro(); });
+  });
+  document.getElementById('btn-start').addEventListener('click', () => {
+    state.step = 'question'; state.qi = 0; render();
+  });
+}
+
+function renderQuestion() {
+  const item = ITEMS[state.qi];
+  document.getElementById('progress-bar').style.width = `${(state.qi / ITEMS.length) * 100}%`;
+  
+  const qtext = item[state.lang];
+  const subtext = state.lang === 'en' ? item.ja : item.en;
+  const subLangClass = state.lang === 'en' ? 'ja' : 'en';
+  const selected = state.answers[item.id];
+  
+  card.innerHTML = `
+    <div class="q-progress">
+      <div class="q-num">Question ${state.qi + 1} <em>/ ${ITEMS.length}</em></div>
+      <div style="display:flex; gap:4px;">
+        ${['en','ja','zh'].map(l => `
+          <button class="nav-btn" data-switch-lang="${l}" style="padding: 4px 10px; font-size: 11px; ${state.lang===l?'background:#1a1a2e;color:white;border-color:#1a1a2e;':''}">
+            ${l==='en'?'EN':l==='ja'?'日':'中'}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+    
+    <div class="question-text ${state.lang}">${qtext}</div>
+    <div class="question-sub ${subLangClass}">${subtext}</div>
+    
+    <div class="likert">
+      <button class="likert-btn ${selected===1?'selected':''}" data-val="1">
+        <div class="num">1</div><div class="lbl">Strongly disagree</div>
+      </button>
+      <button class="likert-btn ${selected===2?'selected':''}" data-val="2">
+        <div class="num">2</div><div class="lbl">Somewhat disagree</div>
+      </button>
+      <button class="likert-btn ${selected===3?'selected':''}" data-val="3">
+        <div class="num">3</div><div class="lbl">Somewhat agree</div>
+      </button>
+      <button class="likert-btn ${selected===4?'selected':''}" data-val="4">
+        <div class="num">4</div><div class="lbl">Strongly agree</div>
+      </button>
+    </div>
+    
+    <div class="nav-row">
+      <button class="nav-btn" id="btn-back" ${state.qi === 0 ? 'disabled' : ''}>← Back</button>
+      <div style="font-size:11px;color:#8a8a9e;">${state.qi + 1} / ${ITEMS.length}</div>
+      <button class="nav-btn" id="btn-next" ${selected == null ? 'disabled' : ''}>
+        ${state.qi === ITEMS.length - 1 ? 'Finish →' : 'Next →'}
+      </button>
+    </div>
+  `;
+  
+  document.querySelectorAll('.likert-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = parseInt(btn.dataset.val);
+      state.answers[item.id] = val;
+      document.querySelectorAll('.likert-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      setTimeout(() => {
+        if (state.qi < ITEMS.length - 1) { state.qi += 1; render(); }
+        else finishToWait();
+      }, 220);
+    });
+  });
+  
+  document.getElementById('btn-back').addEventListener('click', () => {
+    if (state.qi > 0) { state.qi -= 1; render(); }
+  });
+  document.getElementById('btn-next').addEventListener('click', () => {
+    if (state.qi < ITEMS.length - 1) { state.qi += 1; render(); }
+    else finishToWait();
+  });
+  document.querySelectorAll('[data-switch-lang]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      state.lang = e.currentTarget.dataset.switchLang;
+      render();
+    });
+  });
+}
+
+async function finishToWait() {
+  state.userScores = computeUserScores();
+  // Save + reload crowd; network failures must NOT block advancing to the waiting page.
+  try {
+    const updated = await saveCrowdUpdate(state.userScores);
+    if (updated) {
+      state.crowdScores = updated.scores;
+      state.crowdN = updated.n;
+    }
+  } catch (e) {
+    console.warn('Audience average unavailable (continuing anyway):', e);
+    // state.crowdScores stays null; results page will omit the audience bar.
+  }
+  state.step = 'waiting';
+  document.getElementById('progress-bar').style.width = '100%';
+  render();
+}
+
+function renderWaiting() {
+  card.innerHTML = `
+    <div class="wait-step">
+      <div class="check">✓</div>
+      <h2>Thanks — all 18 answered.</h2>
+      <p>Your scores on six dimensions are ready, along with the running audience average and the Japanese high-school benchmarks.</p>
+      <p class="small">When you're ready — or when the speaker signals — click below to see your profile.</p>
+      <button class="reveal-btn" id="btn-reveal">Show my results →</button>
+    </div>
+  `;
+  document.getElementById('btn-reveal').addEventListener('click', () => {
+    state.step = 'results'; render();
+  });
+}
+
+async function refreshCrowd() {
+  const existing = await loadCrowd();
+  state.crowdScores = existing.scores;
+  state.crowdN = existing.n;
+  render();
+}
+
+function factorRow(f) {
+  const meta = FACTORS[f];
+  const userVal = state.userScores[f];
+  const audVal = state.crowdScores ? state.crowdScores[f] : null;
+  const m = meta.means;
+  const toPct = v => ((v - 1) / 3) * 100;
+  
+  return `
+    <div class="factor-bar">
+      <div class="flabel">
+        <div class="fen">${meta.en_name}</div>
+        <div class="fsub">${meta.jp_name}</div>
+      </div>
+      <div class="bar-track">
+        <div class="midline-mark"></div>
+        <div class="bar-line bar-you"    style="width: ${toPct(userVal)}%">You · ${userVal.toFixed(2)}</div>
+        ${audVal != null ? `<div class="bar-line bar-aud" style="width: ${toPct(audVal)}%">Audience · ${audVal.toFixed(2)}</div>` : ''}
+        <div class="bar-line bar-schAll" style="width: ${toPct(m.all)}%">JP all · ${m.all.toFixed(2)}</div>
+        <div class="bar-line bar-schA"   style="width: ${toPct(m.A)}%">A校 · ${m.A.toFixed(2)}</div>
+        <div class="bar-line bar-schB"   style="width: ${toPct(m.B)}%">B校 · ${m.B.toFixed(2)}</div>
+        <div class="bar-line bar-schC"   style="width: ${toPct(m.C)}%">C校 · ${m.C.toFixed(2)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderResults() {
+  const advFactors = FACTOR_ORDER.filter(f => FACTORS[f].side === 'adv');
+  const relFactors = FACTOR_ORDER.filter(f => FACTORS[f].side === 'rel');
+  
+  const advRows = advFactors.map(factorRow).join('');
+  const relRows = relFactors.map(factorRow).join('');
+  
+  const explainCards = FACTOR_ORDER.map(f => {
+    const meta = FACTORS[f];
+    const exp = EXPLAIN[f];
+    return `
+      <div class="explain-card ${meta.side}">
+        <div class="title">${meta.en_name}<span class="jp">${meta.jp_name}</span></div>
+        <div class="defn">${exp.defn_en}</div>
+        <div class="defn ja">${exp.defn_ja}</div>
+      </div>
+    `;
+  }).join('');
+  
+  card.innerHTML = `
+    <div class="results-step">
+      <h2>Your profile on six dimensions</h2>
+      <div class="subline">All scores are on the 1–4 Likert scale, where 2.5 is the neutral midpoint. Higher = more agreement.</div>
+      
+      <div class="chart-section">
+        <div class="chart-title">Agreement levels · 1–4 scale</div>
+        
+        <div class="chart-legend">
+          <div class="item"><div class="sw" style="background: var(--you);"></div>You</div>
+          <div class="item"><div class="sw" style="background: var(--aud);"></div>Audience avg (n=<span id="aud-n">${state.crowdN}</span>)</div>
+          <div class="item"><div class="sw" style="background: var(--schAll);"></div>Japan HS · all</div>
+          <div class="item"><div class="sw" style="background: var(--schA);"></div>A校 (mid-tier)</div>
+          <div class="item"><div class="sw" style="background: var(--schB);"></div>B校 (upper-tier)</div>
+          <div class="item"><div class="sw" style="background: var(--schC);"></div>C校 (top national)</div>
+        </div>
+        
+        <div class="chart-axis">
+          <div class="tick" style="left: 0%;">1</div>
+          <div class="tick" style="left: 33.33%;">2</div>
+          <div class="tick" style="left: 66.67%;">3</div>
+          <div class="tick" style="left: 100%;">4</div>
+        </div>
+        
+        <div class="side-divider adv">JUSTIFICATION · defending the state</div>
+        ${advRows}
+        
+        <div class="side-divider rel">RELATIVIZATION · questioning the state</div>
+        ${relRows}
+      </div>
+      
+      <div class="refresh-row">
+        <div class="n-audience">Audience responses so far: <strong id="n-audience">${state.crowdN}</strong></div>
+        <button class="refresh-btn" id="btn-refresh">↻ Refresh audience average</button>
+      </div>
+      
+      <div class="explain-section">
+        <h3>What each factor means</h3>
+        
+        <div class="explain-legend">
+          <div class="le adv"><div class="le-sw"></div>Justification side · 正当化 (agreeing <em>with</em> defense of the state)</div>
+          <div class="le rel"><div class="le-sw"></div>Relativization side · 相対化 (agreeing <em>with</em> questioning the state)</div>
+        </div>
+        
+        <div class="explain-grid">${explainCards}</div>
+      </div>
+      
+      <div class="note-box">
+        Your individual answers are not stored — only the running audience average is kept, and it uses per-factor means (not raw responses).
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('btn-refresh').addEventListener('click', refreshCrowd);
+}
+
+function render() {
+  if (state.step === 'intro') renderIntro();
+  else if (state.step === 'question') renderQuestion();
+  else if (state.step === 'waiting') renderWaiting();
+  else if (state.step === 'results') renderResults();
+}
+
+(async function() {
+  await maybeHandleAdmin();
+  const existing = await loadCrowd();
+  state.crowdScores = existing.scores;
+  state.crowdN = existing.n;
+  render();
+})();
+</script>
+</body>
+</html>
